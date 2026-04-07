@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMO Analytics — João</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Firebase Auth (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ── Global Auth Loader ── -->
+<div class="global-loader" id="globalLoader">
+    <div class="global-loader-inner">
+        <div class="logo-icon" style="width:44px;height:44px;border-radius:12px;"><i data-lucide="activity"></i></div>
+        <div class="loader-spinner"></div>
+    </div>
+</div>
+
+<!-- ═══ MAIN APP ════════════════════════════════════════════════ -->
+<div class="app" id="appView" style="opacity:0; transition: opacity 0.3s ease;">
+
+    <!-- Topbar -->
+    <header class="topbar">
+        <div class="topbar-logo">
+            <div class="logo-icon"><i data-lucide="activity"></i></div>
+            <div class="logo-text">
+                <span class="logo-name">TMO Analytics</span>
+            </div>
+        </div>
+
+        <div class="topbar-center">
+            <div class="filter-group" role="group" aria-label="Período">
+                <button class="filter-btn active" data-filter="today">Hoje</button>
+                <button class="filter-btn" data-filter="7">7 Dias</button>
+                <button class="filter-btn" data-filter="30">Mês</button>
+                <button class="filter-btn" data-filter="all">Tudo</button>
+            </div>
+        </div>
+
+        <div class="topbar-right">
+            <button class="btn-ghost" onclick="loadHistorico()">
+                <i data-lucide="refresh-cw"></i>
+                Atualizar
+            </button>
+            <button class="btn-new-tmo" onclick="openWizard()">
+                <i data-lucide="plus"></i>
+                Novo TMO
+            </button>
+            <div class="profile-avatar" id="profileAvatar" title="Sair da conta" onclick="logout()">J</div>
+        </div>
+    </header>
+
+    <!-- Scrollable content -->
+    <div class="dashboard-body">
+
+        <!-- KPI Cards -->
+        <section>
+            <div class="kpi-grid">
+                <div class="kpi-card accent-indigo">
+                    <div class="kpi-top">
+                        <span class="kpi-label">TMO Médio</span>
+                        <div class="kpi-icon indigo"><i data-lucide="timer"></i></div>
+                    </div>
+                    <div class="kpi-bottom">
+                        <p class="kpi-value" id="resTmoMedio">—</p>
+                        <p class="kpi-sub" id="resTmoMedioSub">Aguardando dados</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card accent-green">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Status da Meta</span>
+                        <div class="kpi-icon slate" id="kpiStatusIcon"><i data-lucide="shield-check" id="iconStatus"></i></div>
+                    </div>
+                    <div class="kpi-bottom">
+                        <p class="kpi-value" style="font-size:28px; line-height:1.4;" id="resStatus">Aguardando</p>
+                        <p class="kpi-sub">Classificação do período</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card accent-blue">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Ligações</span>
+                        <div class="kpi-icon blue"><i data-lucide="phone-call"></i></div>
+                    </div>
+                    <div class="kpi-bottom">
+                        <p class="kpi-value" id="resTotal">—</p>
+                        <p class="kpi-sub">Total no período</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card accent-amber">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Dentro da Meta</span>
+                        <div class="kpi-icon amber"><i data-lucide="percent"></i></div>
+                    </div>
+                    <div class="kpi-bottom">
+                        <p class="kpi-value" id="resPercent">—</p>
+                        <p class="kpi-sub">Das ligações processadas</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts -->
+        <section>
+            <div class="charts-grid" id="chartsGrid">
+                <div class="chart-box" id="tmoChartBox">
+                    <div class="chart-head">
+                        <div class="chart-head-left">
+                            <p class="chart-title" id="tmoChartTitle">Evolução do TMO</p>
+                            <p class="chart-subtitle" id="tmoChartSub">TMO médio diário em segundos</p>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="tmoChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-box" id="volumeChartBox">
+                    <div class="chart-head">
+                        <div class="chart-head-left">
+                            <p class="chart-title">Volume de Ligações</p>
+                            <p class="chart-subtitle">Total de ligações por dia</p>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="volumeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Insights -->
+        <section id="insightsSection" style="display:none;">
+            <div class="section-header">
+                <h2>Insights do Período</h2>
+                <span id="insightsPeriodLabel"></span>
+            </div>
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-icon indigo"><i data-lucide="clock"></i></div>
+                    <div class="insight-body">
+                        <p class="insight-label">Tempo em Atendimento</p>
+                        <p class="insight-value" id="extraTimeVal">—</p>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-icon green"><i data-lucide="arrow-down-circle"></i></div>
+                    <div class="insight-body">
+                        <p class="insight-label">Ligações ≤ 6 min</p>
+                        <p class="insight-value" id="callsBelow6">—</p>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-icon red"><i data-lucide="arrow-up-circle"></i></div>
+                    <div class="insight-body">
+                        <p class="insight-label">Ligações > 6 min</p>
+                        <p class="insight-value" id="callsAbove6">—</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline Table -->
+        <section id="timelineSection" style="display:none;">
+            <div class="section-header">
+                <h2 id="timelineLabel">Detalhamento</h2>
+                <span id="timelineCount"></span>
+            </div>
+            <div class="timeline-table">
+                <div class="table-header" id="tableHeader"></div>
+                <div class="timeline-rows" id="timelineRows"></div>
+            </div>
+        </section>
+
+    </div><!-- /dashboard-body -->
+</div><!-- /app -->
+
+
+<!-- ═══ WIZARD SCREEN ════════════════════════════════════════════ -->
+<div class="wizard-screen" id="wizardScreen" aria-hidden="true">
+
+    <!-- Wizard Topbar -->
+    <header class="wizard-topbar">
+        <div class="topbar-logo">
+            <div class="logo-icon"><i data-lucide="activity"></i></div>
+            <div class="logo-text"><span class="logo-name">Novo Registro TMO</span></div>
+        </div>
+        <button class="wizard-close" onclick="closeWizard()" title="Cancelar e voltar">
+            <i data-lucide="x"></i>
+            Cancelar
+        </button>
+    </header>
+
+    <!-- Step Indicator -->
+    <div class="wizard-steps-bar">
+        <div class="step-indicator" id="step1Indicator">
+            <div class="step-dot active" data-step="1">1</div>
+            <span class="step-label active">Dados</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-indicator" id="step2Indicator">
+            <div class="step-dot" data-step="2">2</div>
+            <span class="step-label">Revisão</span>
+        </div>
+    </div>
+
+    <!-- Wizard Content -->
+    <div class="wizard-content">
+
+        <!-- Step 1: Input -->
+        <div class="wizard-step active" id="wizardStep1">
+            <div class="wizard-card">
+                <div class="wizard-card-header">
+                    <div class="wizard-card-icon indigo"><i data-lucide="clipboard-list"></i></div>
+                    <div>
+                        <h2>Cole os tempos de TMO</h2>
+                        <p>Insira cada tempo em formato <code>MM:SS</code>, um por linha.</p>
+                    </div>
+                </div>
+
+                <textarea
+                    id="wizardTextarea"
+                    class="wizard-textarea"
+                    placeholder="02:19&#10;04:23&#10;01:54&#10;06:10&#10;..."
+                    spellcheck="false"
+                ></textarea>
+
+                <div class="wizard-textarea-hint">
+                    <i data-lucide="info"></i>
+                    <span id="wizardLineCount">Nenhum tempo detectado ainda</span>
+                </div>
+
+                <div class="wizard-card-footer">
+                    <button class="btn-wizard-next" id="btnWizardNext" onclick="goToStep2()" disabled>
+                        Avançar para Revisão
+                        <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Review -->
+        <div class="wizard-step" id="wizardStep2">
+            <div class="wizard-card">
+                <div class="wizard-card-header">
+                    <div class="wizard-card-icon green"><i data-lucide="check-circle-2"></i></div>
+                    <div>
+                        <h2>Revisão antes de enviar</h2>
+                        <p>Confirme os dados detectados abaixo.</p>
+                    </div>
+                </div>
+
+                <div class="review-stats" id="reviewStats"></div>
+
+                <div class="review-preview">
+                    <p class="review-preview-label">Primeiros registros detectados</p>
+                    <div id="reviewPreviewList" class="review-preview-list"></div>
+                </div>
+
+                <div class="wizard-card-footer" style="justify-content: space-between;">
+                    <button class="btn-wizard-back" onclick="goToStep1()">
+                        <i data-lucide="arrow-left"></i>
+                        Voltar
+                    </button>
+                    <button class="btn-wizard-submit" id="btnWizardSubmit" onclick="submitWizard()">
+                        <i data-lucide="zap"></i>
+                        Confirmar e Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /wizard-content -->
+</div><!-- /wizard-screen -->
+
+
+<script src="firebase-client.js"></script>
+<script src="app-auth.js"></script>
+<script src="app.js"></script>
+<script src="wizard.js"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

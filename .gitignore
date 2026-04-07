@@ -1,0 +1,19 @@
+# Dependências
+node_modules/
+
+# Credenciais — NUNCA subir para o repositório
+servicefb.json
+.env
+*.env
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de IDE e editor
+.vscode/
+*.resolved
+
+# Logs
+*.log
+npm-debug.log*
