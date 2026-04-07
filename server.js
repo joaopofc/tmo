@@ -1,14 +1,28 @@
 const express = require("express");
-const cors = require("cors");
-const admin = require("firebase-admin");
-const path = require("path");
+const cors    = require("cors");
+const admin   = require("firebase-admin");
+const path    = require("path");
 
-// ─── Firebase Init ────────────────────────────────────────────────────────────
-const serviceAccount = require("./servicefb.json");
+// Carrega .env localmente (no Vercel as vars já estão no ambiente)
+try { require("dotenv").config(); } catch (_) {}
+
+// ─── Firebase Init via variáveis de ambiente ──────────────────────
+const serviceAccount = {
+  type:                        "service_account",
+  project_id:                  process.env.FIREBASE_PROJECT_ID,
+  private_key_id:              process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key:                 process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  client_email:                process.env.FIREBASE_CLIENT_EMAIL,
+  client_id:                   process.env.FIREBASE_CLIENT_ID,
+  auth_uri:                    "https://accounts.google.com/o/oauth2/auth",
+  token_uri:                   "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url:        process.env.FIREBASE_CLIENT_CERT_URL,
+};
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://tubemind-ia-default-rtdb.firebaseio.com",
+  credential:  admin.credential.cert(serviceAccount),
+  databaseURL: process.env.FIREBASE_DATABASE_URL,
 });
 
 const db = admin.firestore();
@@ -173,17 +187,16 @@ app.post("/api/analisar", async (req, res) => {
       return res.status(400).json(resultado);
     }
 
+    // Tira os arrays grandes para não pesar o Firestore (conforme comentário)
+    const { temposSegundos, temposFormatados, invalidos, ...resumo } = resultado;
+
     // Salva no Firestore
     const docRef = await db.collection(TMO_COLLECTION).add({
       operador: operador || "Anônimo",
       criadoEm: admin.firestore.FieldValue.serverTimestamp(),
       rawText,
       metaSegundos: metaSegundos || 300,
-      ...resultado,
-      // não salvar arrays grandes, só o resumo
-      temposSegundos: admin.firestore.FieldValue.delete
-        ? resultado.temposSegundos
-        : resultado.temposSegundos,
+      ...resumo,
     });
 
     return res.json({ id: docRef.id, ...resultado });
@@ -228,7 +241,13 @@ app.delete("/api/historico/:id", async (req, res) => {
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`✅ TMO Analista rodando em http://localhost:${PORT}`);
-});
+// Para rodar localmente e não travar o deploy serverless (Vercel/Netlify)
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`✅ TMO Analista rodando em http://localhost:${PORT}`);
+  });
+}
+
+// Exporta o app para que Vercel e Netlify Functions consigam usá-lo como serverless
+module.exports = app;

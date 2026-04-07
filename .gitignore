@@ -5,6 +5,7 @@ node_modules/
 servicefb.json
 .env
 *.env
+.env.exa
 
 # Arquivos do sistema
 .DS_Store
