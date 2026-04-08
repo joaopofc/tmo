@@ -1246,6 +1246,34 @@ body::after {
     .dashboard-body { padding: 20px 20px 48px; }
 }
 
+
+/* ── Theme & Privacy toggle icons ── */
+.icon-moon  { display: var(--icon-dark); }
+.icon-sun   { display: var(--icon-light); }
+
+.icon-eye-open   { display: block; }
+.icon-eye-closed { display: none; }
+
+.privacy-active .icon-eye-open   { display: none; }
+.privacy-active .icon-eye-closed { display: block; }
+
+/* ─── 18. PRIVACY MODE ─────────────────────────────────────────── */
+.privacy-active .kpi-value,
+.privacy-active .insight-value,
+.privacy-active .review-stat-value,
+.privacy-active .chart-body,
+.privacy-active .timeline-cell:not(:first-child) {
+    filter: blur(8px) grayscale(50%);
+    opacity: 0.4;
+    user-select: none;
+    pointer-events: none;
+    transition: filter 0.3s, opacity 0.3s;
+}
+
+.kpi-value, .insight-value, .review-stat-value, .chart-body, .timeline-cell {
+    transition: filter 0.3s, opacity 0.3s;
+}
+
 @media (max-width: 640px) {
     .kpi-grid { grid-template-columns: 1fr; }
     .insights-grid { grid-template-columns: 1fr; }
