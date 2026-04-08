@@ -18,7 +18,7 @@ function parseTmoLines(text) {
 }
 
 function secToMmssWiz(s) {
-    return `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
 // ─── Wizard State ─────────────────────────────────────────────────
@@ -78,7 +78,7 @@ function setActiveStep(n) {
     document.querySelectorAll('.step-dot').forEach((dot, i) => {
         const stepN = i + 1;
         dot.classList.remove('active', 'done');
-        if (stepN < n)  dot.classList.add('done');
+        if (stepN < n) dot.classList.add('done');
         if (stepN === n) dot.classList.add('active');
     });
 
@@ -90,7 +90,7 @@ function setActiveStep(n) {
 
 // ─── Live textarea hint ───────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    const ta  = document.getElementById('wizardTextarea');
+    const ta = document.getElementById('wizardTextarea');
     const btn = document.getElementById('btnWizardNext');
 
     if (!ta) return;
@@ -117,11 +117,11 @@ function updateHint(count) {
 
 // ─── Build Review Screen ──────────────────────────────────────────
 function buildReview(times) {
-    const total     = times.length;
-    const sumSec    = times.reduce((a, t) => a + t.seconds, 0);
-    const avgSec    = Math.round(sumSec / total);
-    const maxSec    = Math.max(...times.map(t => t.seconds));
-    const minSec    = Math.min(...times.map(t => t.seconds));
+    const total = times.length;
+    const sumSec = times.reduce((a, t) => a + t.seconds, 0);
+    const avgSec = Math.round(sumSec / total);
+    const maxSec = Math.max(...times.map(t => t.seconds));
+    const minSec = Math.min(...times.map(t => t.seconds));
 
     // Stats row
     document.getElementById('reviewStats').innerHTML = `
@@ -131,7 +131,7 @@ function buildReview(times) {
         </div>
         <div class="review-stat">
             <span class="review-stat-label">TMO Médio</span>
-            <span class="review-stat-value">${avgSec}s</span>
+            <span class="review-stat-value" style="filter: blur(5px);">${avgSec}s</span>
         </div>
         <div class="review-stat">
             <span class="review-stat-label">Min / Máx</span>
@@ -167,18 +167,18 @@ async function submitWizard() {
     if (!parsedTimes.length) return;
 
     const original = btn.innerHTML;
-    btn.innerHTML  = '<i data-lucide="loader-2" class="lucide-spin"></i> Enviando...';
-    btn.disabled   = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="lucide-spin"></i> Enviando...';
+    btn.disabled = true;
     lucide.createIcons();
 
     try {
-        const res  = await fetch('/api/analisar', {
-            method:  'POST',
+        const res = await fetch('/api/analisar', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({
+            body: JSON.stringify({
                 rawText,
                 metaSegundos: META_SEGUNDOS_WIZ,
-                operador:     'João',
+                operador: 'João',
             }),
         });
 
@@ -192,7 +192,7 @@ async function submitWizard() {
     } catch (err) {
         alert(`Erro ao enviar: ${err.message}`);
         btn.innerHTML = original;
-        btn.disabled  = false;
+        btn.disabled = false;
         lucide.createIcons();
     }
 }

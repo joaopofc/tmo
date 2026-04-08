@@ -5,22 +5,42 @@
 (function () {
     // ── THEME MANAGER ──
     const THEME_KEY = 'tmo-theme';
+    const THEME_HISTORY_KEY = 'tmo-theme-history';
     const DEFAULT_THEME = 'dark';
-    const savedTheme = localStorage.getItem(THEME_KEY) || DEFAULT_THEME;
+    
+    let savedTheme = localStorage.getItem(THEME_KEY) || DEFAULT_THEME;
+    let themeHistory = ['dark', 'light'];
+    try {
+        const hist = JSON.parse(localStorage.getItem(THEME_HISTORY_KEY));
+        if (Array.isArray(hist) && hist.length === 2) {
+            themeHistory = hist;
+        }
+    } catch(e) {}
+    
+    if (!themeHistory.includes(savedTheme)) {
+        themeHistory = [themeHistory[1] || 'dark', savedTheme];
+        localStorage.setItem(THEME_HISTORY_KEY, JSON.stringify(themeHistory));
+    }
+
     document.documentElement.setAttribute('data-theme', savedTheme);
 
     window.TMOTheme = {
         get: () => document.documentElement.getAttribute('data-theme') || DEFAULT_THEME,
         set(theme) {
+            const current = this.get();
+            if (current !== theme) {
+                themeHistory = [current, theme];
+                localStorage.setItem(THEME_HISTORY_KEY, JSON.stringify(themeHistory));
+            }
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem(THEME_KEY, theme);
-            document.querySelectorAll('[data-theme-toggle]').forEach(btn => {
-                btn.setAttribute('title', theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro');
-                btn.setAttribute('aria-label', btn.getAttribute('title'));
-            });
+            
+            document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
         },
         toggle() {
-            this.set(this.get() === 'dark' ? 'light' : 'dark');
+            const current = this.get();
+            const next = current === themeHistory[1] ? themeHistory[0] : themeHistory[1];
+            this.set(next);
         },
     };
 
@@ -46,4 +66,26 @@
             this.set(!this.get());
         }
     };
+
+    // ── DROPDOWN MANAGER ──
+    window.toggleDropdown = function(menuId, event) {
+        if (event) event.stopPropagation();
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+        const isShowing = menu.classList.contains('show');
+        
+        document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+
+        if (!isShowing) {
+            menu.classList.add('show');
+        }
+    };
+
+    if (typeof window !== 'undefined') {
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+            }
+        });
+    }
 })();

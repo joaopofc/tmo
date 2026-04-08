@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             e.currentTarget.classList.add('active');
             currentFilter = e.currentTarget.dataset.filter;
+            clearDrilldown();
             applyFilter();
         });
     });
@@ -59,6 +60,33 @@ function classifyTmo(sec) {
     return { key: 'critico', label: 'Crítico' };
 }
 
+function clearDrilldown() {
+    const banner = document.getElementById('drilldownBanner');
+    if (banner) banner.style.display = 'none';
+
+    if (currentFilter && currentFilter.startsWith('drilldown:')) {
+        currentFilter = '7';
+        document.querySelectorAll('.filter-btn').forEach(b => {
+             b.classList.toggle('active', b.dataset.filter === '7');
+        });
+        applyFilter();
+    }
+}
+
+function setDrilldown(dateStr) {
+    currentFilter = `drilldown:${dateStr}`;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    
+    const banner = document.getElementById('drilldownBanner');
+    const label = document.getElementById('drilldownDateText');
+    if (banner && label) {
+        banner.style.display = 'flex';
+        const parts = dateStr.split('-');
+        label.textContent = `Visualizando: ${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    applyFilter();
+}
+
 function isSameDay(date, ref) {
     return (
         date.getFullYear() === ref.getFullYear() &&
@@ -72,6 +100,12 @@ function filterByPeriod(records, filter) {
     return records.filter(r => {
         if (!r.criadoEm) return true;
         const d = new Date(r.criadoEm);
+
+        if (filter.startsWith('drilldown:')) {
+            const targetIso = filter.split(':')[1];
+            const itemIso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            return targetIso === itemIso;
+        }
 
         if (filter === 'today') return isSameDay(d, now);
 
@@ -98,6 +132,23 @@ async function loadHistorico() {
         const res = await fetch('/api/historico?limite=200');
         const { registros } = await res.json();
         allRegistros = registros || [];
+
+        // Auto fallback: se o filtro atual for "hoje" e não houver dados hoje, muda para 7 dias
+        if (allRegistros.length > 0 && currentFilter === 'today') {
+            const now = new Date();
+            const hasToday = allRegistros.some(r => r.criadoEm && isSameDay(new Date(r.criadoEm), now));
+            if (!hasToday) {
+                currentFilter = '7';
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    if (btn.dataset.filter === '7') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+        }
+
         applyFilter();
     } catch (err) {
         console.error('[TMO] Erro ao carregar histórico:', err);
@@ -171,7 +222,7 @@ function applyFilter() {
     renderInsights(filtered);
 
     // Build chart data
-    if (currentFilter === 'today') {
+    if (currentFilter === 'today' || currentFilter.startsWith('drilldown:')) {
         renderTodayCharts(filtered);
     } else {
         renderGroupedCharts(filtered);
@@ -294,9 +345,11 @@ const TOOLTIP_DEFAULTS = {
 };
 
 function buildGradient(ctx) {
+    const style = getComputedStyle(document.documentElement);
+    const glow = style.getPropertyValue('--brand-glow').trim() || 'rgba(79, 70, 229, 0.22)';
     const g = ctx.createLinearGradient(0, 0, 0, 280);
-    g.addColorStop(0, 'rgba(79, 70, 229, 0.22)');
-    g.addColorStop(1, 'rgba(79, 70, 229, 0.00)');
+    g.addColorStop(0, glow);
+    g.addColorStop(1, 'transparent');
     return g;
 }
 
@@ -308,17 +361,28 @@ function destroyCharts() {
 }
 
 function showVolumeChart(show) {
-    const box = document.getElementById('volumeChartBox');
-    const grid = document.getElementById('chartsGrid');
-    box.style.display = show ? 'flex' : 'none';
-    grid.style.gridTemplateColumns = show ? '1.618fr 1fr' : '1fr';
+    const volBox = document.getElementById('volumeChartBox');
+    const tmoBox = document.getElementById('tmoChartBox');
+    
+    volBox.style.display = show ? 'flex' : 'none';
+    
+    if (!show) {
+        tmoBox.classList.add('fullscreen-override');
+    } else {
+        tmoBox.classList.remove('fullscreen-override');
+    }
 }
 
-function renderCharts(labels, tmoData, volData) {
+function renderCharts(labels, tmoData, volData, detailedLabels = null) {
     destroyCharts();
+
+    showVolumeChart(!!(volData && volData.length));
 
     const ctx = document.getElementById('tmoChart').getContext('2d');
     const gradient = buildGradient(ctx);
+
+    const style = getComputedStyle(document.documentElement);
+    const brand = style.getPropertyValue('--brand').trim() || '#4f46e5';
 
     tmoChartInstance = new Chart(ctx, {
         type: 'line',
@@ -326,20 +390,27 @@ function renderCharts(labels, tmoData, volData) {
             labels,
             datasets: [{
                 data: tmoData,
-                borderColor: '#4f46e5',
+                borderColor: brand,
                 backgroundColor: gradient,
                 borderWidth: 2.5,
                 fill: true,
-                tension: currentFilter === 'today' ? 0.15 : 0.35,
-                pointRadius: currentFilter === 'today' ? 3 : 5,
+                tension: currentFilter === 'today' || currentFilter.startsWith('drilldown:') ? 0.15 : 0.35,
+                pointRadius: currentFilter === 'today' || currentFilter.startsWith('drilldown:') ? 3 : 5,
                 pointHoverRadius: 8,
-                pointBackgroundColor: '#fff',
-                pointBorderColor: '#4f46e5',
+                pointBackgroundColor: style.getPropertyValue('--surface-0').trim() || '#fff',
+                pointBorderColor: brand,
                 pointBorderWidth: 2.5,
             }],
         },
         options: {
             ...CHART_DEFAULTS,
+            onClick: (e, elements) => {
+                if (!detailedLabels || !elements.length) return;
+                const idx = elements[0].index;
+                if (detailedLabels[idx]) {
+                    setDrilldown(detailedLabels[idx]);
+                }
+            },
             plugins: {
                 legend: { display: false },
                 datalabels: {
@@ -347,9 +418,9 @@ function renderCharts(labels, tmoData, volData) {
                     align: 'top',
                     anchor: 'end',
                     offset: 6,
-                    color: '#4f46e5',
+                    color: brand,
                     font: { family: '"JetBrains Mono", monospace', weight: '700', size: 11 },
-                    backgroundColor: 'rgba(255,255,255,0.92)',
+                    backgroundColor: style.getPropertyValue('--surface-1').trim() || 'rgba(255,255,255,0.92)',
                     borderRadius: 4,
                     padding: { x: 5, y: 3 },
                     formatter: v => `${v}s`,
@@ -378,8 +449,6 @@ function renderCharts(labels, tmoData, volData) {
         },
     });
 
-    showVolumeChart(!!(volData && volData.length));
-
     if (volData && volData.length) {
         const vctx = document.getElementById('volumeChart').getContext('2d');
         volChartInstance = new Chart(vctx, {
@@ -388,8 +457,8 @@ function renderCharts(labels, tmoData, volData) {
                 labels,
                 datasets: [{
                     data: volData,
-                    backgroundColor: 'rgba(79, 70, 229, 0.10)',
-                    hoverBackgroundColor: '#4f46e5',
+                    backgroundColor: style.getPropertyValue('--brand-glow').trim() || 'rgba(79, 70, 229, 0.10)',
+                    hoverBackgroundColor: brand,
                     borderRadius: 6,
                     borderSkipped: false,
                     maxBarThickness: 34,
@@ -439,7 +508,12 @@ function renderTodayCharts(filtered) {
         }
     });
 
-    document.getElementById('tmoChartTitle').textContent = 'Ligações de Hoje';
+    if (currentFilter.startsWith('drilldown:')) {
+        const parts = currentFilter.split(':')[1].split('-');
+        document.getElementById('tmoChartTitle').textContent = `Ligações do dia ${parts[2]}/${parts[1]}/${parts[0]}`;
+    } else {
+        document.getElementById('tmoChartTitle').textContent = 'Ligações de Hoje';
+    }
     document.getElementById('tmoChartSub').textContent = `${labels.length} ligações registradas`;
 
     renderCharts(labels, tmoData, null);
@@ -454,26 +528,28 @@ function renderGroupedCharts(filtered) {
     crono.forEach(r => {
         if (!r.criadoEm) return;
         const d = new Date(r.criadoEm);
-        const key = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const fullDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const shortKey = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 
-        if (!byDay.has(key)) byDay.set(key, { totalSec: 0, calls: 0 });
-        const entry = byDay.get(key);
+        if (!byDay.has(fullDate)) byDay.set(fullDate, { label: shortKey, totalSec: 0, calls: 0 });
+        const entry = byDay.get(fullDate);
         entry.totalSec += mmssToSec(r.tmoMedio) * (r.totalLigacoes || 0);
         entry.calls += r.totalLigacoes || 0;
     });
 
-    const labels = Array.from(byDay.keys());
-    const tmoData = labels.map(k => {
+    const detailedLabels = Array.from(byDay.keys());
+    const labels = detailedLabels.map(k => byDay.get(k).label);
+    const tmoData = detailedLabels.map(k => {
         const e = byDay.get(k);
         return e.calls > 0 ? Math.round(e.totalSec / e.calls) : 0;
     });
-    const volData = labels.map(k => byDay.get(k).calls);
+    const volData = detailedLabels.map(k => byDay.get(k).calls);
 
     const periodMap = { '7': 'Últimos 7 dias', '30': 'Este mês', all: 'Histórico completo' };
     document.getElementById('tmoChartTitle').textContent = 'TMO Médio Diário';
-    document.getElementById('tmoChartSub').textContent = `${labels.length} dias — ${periodMap[currentFilter] || ''}`;
+    document.getElementById('tmoChartSub').textContent = `${labels.length} dias — clique num dia para detalhar`;
 
-    renderCharts(labels, tmoData, volData);
+    renderCharts(labels, tmoData, volData, detailedLabels);
     renderTimeline(labels, tmoData, 'days', volData);
 }
 

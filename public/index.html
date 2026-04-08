@@ -38,20 +38,38 @@
             </div>
         </div>
 
-        <div class="topbar-center">
+        <div class="topbar-center topbar-center-col">
             <div class="filter-group" role="group" aria-label="Período">
                 <button class="filter-btn active" data-filter="today">Hoje</button>
                 <button class="filter-btn" data-filter="7">7 Dias</button>
                 <button class="filter-btn" data-filter="30">Mês</button>
                 <button class="filter-btn" data-filter="all">Tudo</button>
             </div>
+            <div class="drilldown-banner" id="drilldownBanner" style="display: none;">
+                <i data-lucide="calendar"></i>
+                <span id="drilldownDateText">Visualizando: 00/00/0000</span>
+                <button onclick="clearDrilldown()" class="btn-close-drilldown"><i data-lucide="x"></i></button>
+            </div>
         </div>
 
         <div class="topbar-right">
-            <button class="btn-theme" data-theme-toggle onclick="TMOTheme.toggle()">
-                <i data-lucide="moon" class="icon-moon"></i>
-                <i data-lucide="sun" class="icon-sun"></i>
-            </button>
+            <div class="dropdown" id="themeDropdown">
+                <div class="theme-toggle-group">
+                    <button class="btn-theme" data-theme-toggle onclick="TMOTheme.toggle()" title="Alternar últimos temas">
+                        <i data-lucide="moon" class="icon-moon"></i>
+                        <i data-lucide="sun" class="icon-sun"></i>
+                        <i data-lucide="monitor" class="icon-system"></i>
+                    </button>
+                    <button class="btn-theme-arrow" onclick="toggleDropdown('themeDropdownMenu', event)">
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                </div>
+                <div class="dropdown-menu" id="themeDropdownMenu">
+                    <button class="dropdown-item" onclick="TMOTheme.set('dark')"><i data-lucide="moon"></i> Tema Escuro</button>
+                    <button class="dropdown-item" onclick="TMOTheme.set('light')"><i data-lucide="sun"></i> Tema Claro</button>
+                    <button class="dropdown-item" onclick="TMOTheme.set('system')"><i data-lucide="monitor"></i> Tema Sistema</button>
+                </div>
+            </div>
             <button class="btn-theme" data-privacy-toggle onclick="TMOPrivacy.toggle()" title="Ocultar valores monetários/métricas">
                 <i data-lucide="eye" class="icon-eye-open"></i>
                 <i data-lucide="eye-off" class="icon-eye-closed"></i>
@@ -64,7 +82,14 @@
                 <i data-lucide="plus"></i>
                 Novo TMO
             </button>
-            <div class="profile-avatar" id="profileAvatar" title="Sair da conta" onclick="logout()">J</div>
+            <div class="dropdown" id="profileDropdown">
+                <div class="profile-avatar" id="profileAvatar" title="Sair da conta" onclick="toggleDropdown('profileDropdownMenu', event)">J</div>
+                <div class="dropdown-menu" id="profileDropdownMenu">
+                    <button class="dropdown-item" onclick="alert('Tela de configurações em breve!'); document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));"><i data-lucide="settings"></i> Configurações</button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item text-red" onclick="logout()"><i data-lucide="log-out"></i> Sair</button>
+                </div>
+            </div>
         </div>
     </header>
 

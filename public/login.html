@@ -15,11 +15,22 @@
 <body class="login-body">
 
     <!-- Theme Toggle -->
-    <div class="login-theme-toggle">
-        <button class="btn-theme" data-theme-toggle onclick="TMOTheme.toggle()">
-            <i data-lucide="moon" class="icon-moon"></i>
-            <i data-lucide="sun" class="icon-sun"></i>
-        </button>
+    <div class="login-theme-toggle dropdown" id="loginThemeDropdown">
+        <div class="theme-toggle-group">
+            <button class="btn-theme" data-theme-toggle onclick="TMOTheme.toggle()" title="Alternar últimos temas">
+                <i data-lucide="moon" class="icon-moon"></i>
+                <i data-lucide="sun" class="icon-sun"></i>
+                <i data-lucide="monitor" class="icon-system"></i>
+            </button>
+            <button class="btn-theme-arrow" onclick="toggleDropdown('loginThemeMenu', event)">
+                <i data-lucide="chevron-down"></i>
+            </button>
+        </div>
+        <div class="dropdown-menu" id="loginThemeMenu">
+            <button class="dropdown-item" onclick="TMOTheme.set('dark')"><i data-lucide="moon"></i> Tema Escuro</button>
+            <button class="dropdown-item" onclick="TMOTheme.set('light')"><i data-lucide="sun"></i> Tema Claro</button>
+            <button class="dropdown-item" onclick="TMOTheme.set('system')"><i data-lucide="monitor"></i> Tema Sistema</button>
+        </div>
     </div>
 
     <!-- ── Full-page Loader (auth check) ── -->

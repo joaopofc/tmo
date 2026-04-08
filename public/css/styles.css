@@ -123,6 +123,61 @@
     --icon-light: none;
 }
 
+/* ─── 2.1 SYSTEM THEME (STRIPE/VERCEL MINIMALIST) ──────────────── */
+[data-theme="system"] {
+    --bg-app:         #fafafa;
+    --surface-0:      #ffffff;
+    --surface-1:      #ffffff;
+    --surface-2:      #f4f4f5;
+    --surface-3:      #e4e4e7;
+
+    --text-primary:   #09090b;
+    --text-secondary: #52525b;
+    --text-tertiary:  #a1a1aa;
+
+    --border-default: #e4e4e7;
+    --border-strong:  #d4d4d8;
+
+    --topbar-bg:      rgba(255,255,255,0.85);
+
+    --brand:          #09090b;
+    --brand-hover:    #27272a;
+    --brand-active:   #09090b;
+    --brand-subtle:   #f4f4f5;
+    --brand-border:   #e4e4e7;
+    --brand-glow:     rgba(9,9,11,0.05);
+
+    --green:          #18181b;
+    --green-subtle:   #fafafa;
+    --green-border:   #e4e4e7;
+    --green-glow:     rgba(24,24,27,0.03);
+
+    --blue:           #18181b;
+    --blue-subtle:    #fafafa;
+    --blue-border:    #e4e4e7;
+
+    --amber:          #18181b;
+    --amber-subtle:   #fafafa;
+    --amber-border:   #e4e4e7;
+
+    --red:            #52525b;
+    --red-subtle:     #fafafa;
+    --red-border:     #e4e4e7;
+
+    --purple:         #18181b;
+    --cyan:           #18181b;
+
+    --shadow-xs:    0 1px 2px rgba(0,0,0,0.03);
+    --shadow-sm:    0 2px 6px rgba(0,0,0,0.04);
+    --shadow-md:    0 6px 16px rgba(0,0,0,0.06);
+    --shadow-lg:    0 12px 32px rgba(0,0,0,0.08);
+    --shadow-brand: 0 4px 14px rgba(0,0,0,0.06);
+    --shadow-green: 0 4px 14px rgba(0,0,0,0.06);
+
+    --ambient-1: transparent;
+    --ambient-2: transparent;
+}
+
 /* ─── 3. SHARED CONSTANTS ──────────────────────────────────────── */
 :root {
     --radius-xs:  4px;
@@ -243,6 +298,46 @@ body::after {
     flex: 1;
     display: flex;
     justify-content: center;
+}
+
+.drilldown-banner {
+    display: flex;
+    align-items: center;
+    background: var(--brand-subtle);
+    border: 1px dashed var(--brand-border);
+    border-radius: var(--radius-sm);
+    padding: 3px 6px 3px 12px;
+    gap: 8px;
+    height: 34px;
+    transition: all 0.3s ease;
+}
+
+.drilldown-banner i {
+    width: 14px; height: 14px;
+    color: var(--brand);
+}
+
+.drilldown-banner span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--brand);
+    white-space: nowrap;
+}
+
+.btn-close-drilldown {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-close-drilldown:hover {
+    background: var(--red-subtle);
+    color: var(--red);
 }
 
 .filter-group {
@@ -525,9 +620,29 @@ body::after {
 
 /* ─── 10. CHARTS ─────────────────────────────────────────────────── */
 .charts-grid {
-    display: grid;
-    grid-template-columns: 1.618fr 1fr;
+    display: flex;
+    flex-wrap: wrap;
     gap: 14px;
+}
+
+#tmoChartBox {
+    flex: 0 0 auto;
+    width: calc((100% - 14px) * 0.618);
+    min-width: 320px;
+    max-width: 100%;
+    resize: horizontal;
+    overflow: hidden;
+}
+
+#tmoChartBox.fullscreen-override {
+    width: 100% !important;
+    resize: none !important;
+}
+
+#volumeChartBox {
+    flex: 1 1 300px;
+    min-width: 300px;
+
 }
 
 .chart-box {
@@ -1283,3 +1398,128 @@ body::after {
     .review-stats { grid-template-columns: repeat(2, 1fr); }
     .login-card { padding: 28px 24px; }
 }
+
+/* ─── 19. DROPDOWNS ─────────────────────────────────────────────── */
+.dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.theme-toggle-group {
+    display: flex;
+    align-items: center;
+    background: var(--surface-2);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    transition: all 0.2s var(--ease-spring);
+    height: 34px;
+}
+
+.theme-toggle-group:hover {
+    border-color: var(--brand-border);
+}
+
+.theme-toggle-group .btn-theme {
+    border: none;
+    border-radius: 0;
+    border-right: 1px solid var(--border-default);
+    background: transparent;
+    height: 100%;
+}
+
+.theme-toggle-group .btn-theme:hover {
+    transform: none;
+    background: var(--brand-subtle);
+}
+
+.btn-theme-arrow {
+    background: transparent;
+    border: none;
+    width: 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-theme-arrow:hover {
+    background: var(--brand-subtle);
+    color: var(--brand);
+}
+
+.btn-theme-arrow i { width: 14px; height: 14px; }
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--surface-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 6px;
+    box-shadow: var(--shadow-md);
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s var(--ease-spring);
+    z-index: 100;
+}
+
+.dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-xs);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font);
+    color: var(--text-secondary);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.dropdown-item i { width: 15px; height: 15px; }
+
+.dropdown-item:hover {
+    background: var(--surface-2);
+    color: var(--text-primary);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--border-default);
+    margin: 6px 0;
+}
+
+.text-red { color: var(--red); }
+.text-red:hover { color: var(--red) !important; background: var(--red-subtle) !important; }
+
+/* Theme Icons Setup for 3 themes */
+[data-theme="dark"] .icon-moon { display: none !important; }
+[data-theme="dark"] .icon-sun { display: block !important; }
+[data-theme="dark"] .icon-system { display: none !important; }
+
+[data-theme="light"] .icon-moon { display: block !important; }
+[data-theme="light"] .icon-sun { display: none !important; }
+[data-theme="light"] .icon-system { display: none !important; }
+
+[data-theme="system"] .icon-moon { display: none !important; }
+[data-theme="system"] .icon-sun { display: none !important; }
+[data-theme="system"] .icon-system { display: block !important; }
