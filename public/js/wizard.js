@@ -131,7 +131,7 @@ function buildReview(times) {
         </div>
         <div class="review-stat">
             <span class="review-stat-label">TMO Médio</span>
-            <span class="review-stat-value" style="filter: blur(5px);">${avgSec}s</span>
+            <span class="review-stat-value">${avgSec}s</span>
         </div>
         <div class="review-stat">
             <span class="review-stat-label">Min / Máx</span>
