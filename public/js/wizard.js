@@ -172,13 +172,22 @@ async function submitWizard() {
     lucide.createIcons();
 
     try {
+        const token = typeof getIdToken === 'function' ? await getIdToken() : null;
+        if (!token) {
+            alert("A sessão expirada ou você não está logado.");
+            return;
+        }
+
         const res = await fetch('/api/analisar', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({
                 rawText,
                 metaSegundos: META_SEGUNDOS_WIZ,
-                operador: 'João',
+                operador: 'Sistema',
             }),
         });
 

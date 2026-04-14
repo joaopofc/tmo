@@ -172,8 +172,25 @@ function analisarTMO(rawText, metaSegundos) {
 
 // ─── Rotas ────────────────────────────────────────────────────────────────────
 
+// Middleware de autenticação do Firebase
+async function verifyAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ erro: "Não autorizado. Token não fornecido." });
+  }
+  const token = authHeader.split(" ")[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;
+    next();
+  } catch (err) {
+    console.error("Erro ao verificar token:", err);
+    return res.status(401).json({ erro: "Não autorizado. Token inválido." });
+  }
+}
+
 // POST /api/analisar — analisa e salva no Firebase
-app.post("/api/analisar", async (req, res) => {
+app.post("/api/analisar", verifyAuth, async (req, res) => {
   try {
     const { rawText, metaSegundos, operador } = req.body;
 
@@ -190,9 +207,10 @@ app.post("/api/analisar", async (req, res) => {
     // Tira os arrays grandes para não pesar o Firestore (conforme comentário)
     const { temposSegundos, temposFormatados, invalidos, ...resumo } = resultado;
 
-    // Salva no Firestore
+    // Salva no Firestore atrelando ao ID do usuário
     const docRef = await db.collection(TMO_COLLECTION).add({
-      operador: operador || "Anônimo",
+      userId: req.user.uid,
+      operador: req.user.name || req.user.email || operador || "Anônimo",
       criadoEm: admin.firestore.FieldValue.serverTimestamp(),
       rawText,
       metaSegundos: metaSegundos || 300,
@@ -206,12 +224,31 @@ app.post("/api/analisar", async (req, res) => {
   }
 });
 
+// POST /api/syncUser — Salva o usuário no banco de dados ao fazer login
+app.post("/api/syncUser", verifyAuth, async (req, res) => {
+  try {
+    const userRef = db.collection("usuarios").doc(req.user.uid);
+    await userRef.set({
+      userId: req.user.uid,
+      email: req.user.email || "",
+      nome: req.user.name || "Usuário",
+      ultimoLogin: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    return res.json({ sucesso: true, userId: req.user.uid });
+  } catch (err) {
+    console.error("Erro ao sincronizar usuário:", err);
+    return res.status(500).json({ erro: "Erro ao sincronizar usuário." });
+  }
+});
+
 // GET /api/historico — busca histórico de análises
-app.get("/api/historico", async (req, res) => {
+app.get("/api/historico", verifyAuth, async (req, res) => {
   try {
     const limite = parseInt(req.query.limite) || 20;
     const snapshot = await db
       .collection(TMO_COLLECTION)
+      .where("userId", "==", req.user.uid) // Isola os dados por usuário
       .orderBy("criadoEm", "desc")
       .limit(limite)
       .get();
@@ -225,14 +262,20 @@ app.get("/api/historico", async (req, res) => {
     return res.json({ registros });
   } catch (err) {
     console.error("Erro em /api/historico:", err);
-    return res.status(500).json({ erro: "Erro ao buscar histórico." });
+    // Repassa mensagem original para podermos ver o erro de índice no front e ajudar o dev
+    return res.status(500).json({ erro: err.message || "Erro ao buscar histórico." });
   }
 });
 
 // DELETE /api/historico/:id — deleta um registro
-app.delete("/api/historico/:id", async (req, res) => {
+app.delete("/api/historico/:id", verifyAuth, async (req, res) => {
   try {
-    await db.collection(TMO_COLLECTION).doc(req.params.id).delete();
+    const docRef = db.collection(TMO_COLLECTION).doc(req.params.id);
+    const doc = await docRef.get();
+    if (!doc.exists || doc.data().userId !== req.user.uid) {
+      return res.status(403).json({ erro: "Acesso negado: o registro pertence a outro usuário." });
+    }
+    await docRef.delete();
     return res.json({ sucesso: true });
   } catch (err) {
     console.error("Erro ao deletar:", err);

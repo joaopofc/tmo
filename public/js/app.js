@@ -13,8 +13,6 @@ const LIMITE_6MIN = 360;
 
 // ─── Boot ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    loadHistorico();
-
     document.getElementById('btnAnalisar')
         ?.addEventListener('click', handleSubmit);
 
@@ -67,7 +65,7 @@ function clearDrilldown() {
     if (currentFilter && currentFilter.startsWith('drilldown:')) {
         currentFilter = '7';
         document.querySelectorAll('.filter-btn').forEach(b => {
-             b.classList.toggle('active', b.dataset.filter === '7');
+            b.classList.toggle('active', b.dataset.filter === '7');
         });
         applyFilter();
     }
@@ -76,7 +74,7 @@ function clearDrilldown() {
 function setDrilldown(dateStr) {
     currentFilter = `drilldown:${dateStr}`;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    
+
     const banner = document.getElementById('drilldownBanner');
     const label = document.getElementById('drilldownDateText');
     if (banner && label) {
@@ -103,7 +101,7 @@ function filterByPeriod(records, filter) {
 
         if (filter.startsWith('drilldown:')) {
             const targetIso = filter.split(':')[1];
-            const itemIso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            const itemIso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             return targetIso === itemIso;
         }
 
@@ -129,8 +127,26 @@ function formatLabel(date, filter) {
 // ─── API ──────────────────────────────────────────────────────────
 async function loadHistorico() {
     try {
-        const res = await fetch('/api/historico?limite=200');
-        const { registros } = await res.json();
+        const token = typeof getIdToken === 'function' ? await getIdToken() : null;
+        if (!token) {
+            console.warn("Usuário não logado. Histórico não carregado.");
+            return;
+        }
+
+        const res = await fetch('/api/historico?limite=200', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+            if (json.erro && json.erro.includes("index")) {
+                alert("O Firebase requer a criação de um Índice para ordenar seus dados pessoais. Verifique o console/log do backend e clique no link fornecido pela Google para criá-lo.");
+            }
+            throw new Error(json.erro || 'Erro ao carregar histórico');
+        }
+
+        const { registros } = json;
         allRegistros = registros || [];
 
         // Auto fallback: se o filtro atual for "hoje" e não houver dados hoje, muda para 7 dias
@@ -170,10 +186,19 @@ async function handleSubmit() {
     lucide.createIcons();
 
     try {
+        const token = typeof getIdToken === 'function' ? await getIdToken() : null;
+        if (!token) {
+            alert("A sessão expirou ou você não está logado. Atualize a página.");
+            return;
+        }
+
         const res = await fetch('/api/analisar', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rawText, metaSegundos: META_SEGUNDOS, operador: 'João' }),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ rawText, metaSegundos: META_SEGUNDOS, operador: 'Sistema' }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.erro || 'Erro desconhecido');
@@ -363,9 +388,9 @@ function destroyCharts() {
 function showVolumeChart(show) {
     const volBox = document.getElementById('volumeChartBox');
     const tmoBox = document.getElementById('tmoChartBox');
-    
+
     volBox.style.display = show ? 'flex' : 'none';
-    
+
     if (!show) {
         tmoBox.classList.add('fullscreen-override');
     } else {
@@ -528,7 +553,7 @@ function renderGroupedCharts(filtered) {
     crono.forEach(r => {
         if (!r.criadoEm) return;
         const d = new Date(r.criadoEm);
-        const fullDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const fullDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const shortKey = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 
         if (!byDay.has(fullDate)) byDay.set(fullDate, { label: shortKey, totalSec: 0, calls: 0 });
