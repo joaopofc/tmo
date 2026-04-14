@@ -108,30 +108,30 @@ function updateHint(times) {
     const aboveEl = document.getElementById('wizardCountAbove');
     const boxBelow = document.getElementById('wizStatBelow');
     const boxAbove = document.getElementById('wizStatAbove');
-    
+
     if (!hint) return;
 
     if (!times || times.length === 0) {
-        hint.innerHTML = '<strong>0</strong> validados';
+        hint.innerHTML = '<span style="font-weight: 300;"><strong style="font-weight: 900; font-size: 15px">0</strong> chamadas</span>';
         hint.parentElement.classList.remove('active-info');
-        
-        belowEl.innerHTML = '<strong>0</strong> abaixo de 6 min';
+
+        belowEl.innerHTML = '<span style="font-weight: 300;"><strong style="font-weight: 900; font-size: 15px">0</strong> abaixo de 6min</span>';
         boxBelow.classList.remove('active-green');
-        
-        aboveEl.innerHTML = '<strong>0</strong> acima de 6 min';
+
+        aboveEl.innerHTML = '<span style="font-weight: 300;"><strong style="font-weight: 900; font-size: 15px">0</strong> acima de 6min</span>';
         boxAbove.classList.remove('active-red');
     } else {
-        hint.innerHTML = `<strong>${times.length}</strong> validado${times.length > 1 ? 's' : ''}`;
+        hint.innerHTML = `<span style="font-weight: 300;"><strong style="font-weight: 900; font-size: 15px">${times.length}</strong> chamada${times.length > 1 ? 's' : ''}</span>`;
         hint.parentElement.classList.add('active-info');
-        
+
         let below = 0;
         let above = 0;
         times.forEach(t => { t.seconds > 360 ? above++ : below++; });
-        
-        belowEl.innerHTML = `<strong>${below}</strong> abaixo de 6 min`;
+
+        belowEl.innerHTML = `<span style="font-weight: 300;"><strong style="font-weight: 900; font-size: 15px">${below}</strong> abaixo de 6min</span>`;
         if (below > 0) boxBelow.classList.add('active-green'); else boxBelow.classList.remove('active-green');
-        
-        aboveEl.innerHTML = `<strong>${above}</strong> acima de 6 min`;
+
+        aboveEl.innerHTML = `<span style="font-weight: 300;"><strong style="font-weight: 900; font-size: 15px">${above}</strong> acima de 6min</span>`;
         if (above > 0) boxAbove.classList.add('active-red'); else boxAbove.classList.remove('active-red');
     }
 }
@@ -201,7 +201,7 @@ async function submitWizard() {
 
         const res = await fetch('/api/analisar', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
