@@ -408,6 +408,10 @@ function renderCharts(labels, tmoData, volData, detailedLabels = null) {
 
     const style = getComputedStyle(document.documentElement);
     const brand = style.getPropertyValue('--brand').trim() || '#4f46e5';
+    const gridColor = style.getPropertyValue('--border-default').trim() || 'rgba(255,255,255,0.1)';
+    const textColor = style.getPropertyValue('--text-tertiary').trim() || '#94a3b8';
+    const surface1 = style.getPropertyValue('--surface-1').trim() || '#111827';
+    const surface0 = style.getPropertyValue('--surface-0').trim() || '#0d1117';
 
     tmoChartInstance = new Chart(ctx, {
         type: 'line',
@@ -422,7 +426,7 @@ function renderCharts(labels, tmoData, volData, detailedLabels = null) {
                 tension: currentFilter === 'today' || currentFilter.startsWith('drilldown:') ? 0.15 : 0.35,
                 pointRadius: currentFilter === 'today' || currentFilter.startsWith('drilldown:') ? 3 : 5,
                 pointHoverRadius: 8,
-                pointBackgroundColor: style.getPropertyValue('--surface-0').trim() || '#fff',
+                pointBackgroundColor: surface0,
                 pointBorderColor: brand,
                 pointBorderWidth: 2.5,
             }],
@@ -445,7 +449,7 @@ function renderCharts(labels, tmoData, volData, detailedLabels = null) {
                     offset: 6,
                     color: brand,
                     font: { family: '"JetBrains Mono", monospace', weight: '700', size: 11 },
-                    backgroundColor: style.getPropertyValue('--surface-1').trim() || 'rgba(255,255,255,0.92)',
+                    backgroundColor: surface1,
                     borderRadius: 4,
                     padding: { x: 5, y: 3 },
                     formatter: v => `${v}s`,
@@ -463,12 +467,12 @@ function renderCharts(labels, tmoData, volData, detailedLabels = null) {
             scales: {
                 x: {
                     grid: { display: false },
-                    ticks: { font: { family: 'Inter', size: 12, weight: '500' }, color: '#94a3b8', maxRotation: 0 },
+                    ticks: { font: { family: 'Inter', size: 12, weight: '500' }, color: textColor, maxRotation: 0 },
                 },
                 y: {
                     beginAtZero: false,
-                    grid: { color: '#f1f5f9', lineWidth: 1 },
-                    ticks: { font: { family: 'Inter', size: 11 }, color: '#94a3b8', callback: v => `${v}s` },
+                    grid: { color: gridColor, lineWidth: 1 },
+                    ticks: { font: { family: 'Inter', size: 11 }, color: textColor, callback: v => `${v}s` },
                 },
             },
         },
@@ -500,12 +504,12 @@ function renderCharts(labels, tmoData, volData, detailedLabels = null) {
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { font: { family: 'Inter', size: 12, weight: '500' }, color: '#94a3b8', maxRotation: 0 },
+                        ticks: { font: { family: 'Inter', size: 12, weight: '500' }, color: textColor, maxRotation: 0 },
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { color: '#f1f5f9' },
-                        ticks: { font: { family: 'Inter', size: 11 }, color: '#94a3b8', stepSize: 1 },
+                        grid: { color: gridColor },
+                        ticks: { font: { family: 'Inter', size: 11 }, color: textColor, stepSize: 1 },
                     },
                 },
             },

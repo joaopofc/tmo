@@ -8,20 +8,20 @@
 /* ─── 1. DARK THEME TOKENS (default) ──────────────────────────── */
 :root,
 [data-theme="dark"] {
-    --bg-app:         #080c14;
-    --surface-0:      #0d1117;
-    --surface-1:      #111827;
-    --surface-2:      #1a2235;
-    --surface-3:      #212d40;
+    --bg-app:         #0a0a0b;
+    --surface-0:      #121214;
+    --surface-1:      #18181b;
+    --surface-2:      #27272a;
+    --surface-3:      #3f3f46;
 
-    --text-primary:   #f0f4ff;
-    --text-secondary: #8899b4;
-    --text-tertiary:  #4d6080;
+    --text-primary:   #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --text-tertiary:  #71717a;
 
-    --border-default: rgba(255,255,255,0.07);
-    --border-strong:  rgba(255,255,255,0.14);
+    --border-default: rgba(255,255,255,0.08);
+    --border-strong:  rgba(255,255,255,0.15);
 
-    --topbar-bg:      rgba(13,17,23,0.85);
+    --topbar-bg:      rgba(10,10,11,0.85);
 
     --brand:          #6366f1;
     --brand-hover:    #818cf8;
@@ -61,8 +61,8 @@
     --ambient-2: rgba(16,185,129,0.04);
 
     /* toggle icon shown */
-    --icon-dark: none;
-    --icon-light: block;
+    --icon-dark: block;
+    --icon-light: none;
 }
 
 /* ─── 2. LIGHT THEME TOKENS ────────────────────────────────────── */
@@ -119,8 +119,8 @@
     --ambient-1: rgba(79,70,229,0.04);
     --ambient-2: rgba(5,150,105,0.03);
 
-    --icon-dark: block;
-    --icon-light: none;
+    --icon-dark: none;
+    --icon-light: block;
 }
 
 /* ─── 2.1 SYSTEM THEME (STRIPE/VERCEL MINIMALIST) ──────────────── */
@@ -949,18 +949,34 @@ body::after {
     background: var(--surface-1);
 }
 
-.wizard-textarea-hint {
+.wizard-live-stats {
     display: flex;
     align-items: center;
-    gap: 7px;
-    font-size: 13px;
-    color: var(--text-tertiary);
-    padding: 0 2px;
-    transition: color 0.2s;
+    gap: 8px;
+    margin-top: 2px;
 }
 
-.wizard-textarea-hint i { width: 14px; height: 14px; flex-shrink: 0; }
-.wizard-textarea-hint.valid { color: var(--green); }
+.wiz-stat-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    background: var(--surface-2);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-default);
+    transition: all 0.25s;
+    flex: 1;
+    justify-content: center;
+}
+
+.wiz-stat-box i { width: 14px; height: 14px; flex-shrink: 0; }
+
+.wiz-stat-box.active-info { color: var(--brand); background: var(--brand-subtle); border-color: var(--brand-border); }
+.wiz-stat-box.green.active-green { color: var(--green); background: var(--green-subtle); border-color: var(--green-border); opacity: 1 !important; }
+.wiz-stat-box.red.active-red { color: var(--red); background: var(--red-subtle); border-color: var(--red-border); opacity: 1 !important; }
 
 .wizard-card-footer {
     display: flex;

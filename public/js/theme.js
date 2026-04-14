@@ -6,10 +6,10 @@
     // ── THEME MANAGER ──
     const THEME_KEY = 'tmo-theme';
     const THEME_HISTORY_KEY = 'tmo-theme-history';
-    const DEFAULT_THEME = 'dark';
+    const DEFAULT_THEME = 'light';
     
     let savedTheme = localStorage.getItem(THEME_KEY) || DEFAULT_THEME;
-    let themeHistory = ['dark', 'light'];
+    let themeHistory = ['light', 'dark'];
     try {
         const hist = JSON.parse(localStorage.getItem(THEME_HISTORY_KEY));
         if (Array.isArray(hist) && hist.length === 2) {

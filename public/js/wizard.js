@@ -43,7 +43,7 @@ function closeWizard() {
     setTimeout(() => {
         document.getElementById('wizardTextarea').value = '';
         parsedTimes = [];
-        updateHint(0);
+        updateHint([]);
         document.getElementById('btnWizardNext').disabled = true;
     }, 460);
 }
@@ -96,22 +96,43 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!ta) return;
 
     ta.addEventListener('input', () => {
-        const count = parseTmoLines(ta.value).length;
-        updateHint(count);
-        btn.disabled = count === 0;
+        const times = parseTmoLines(ta.value);
+        updateHint(times);
+        btn.disabled = times.length === 0;
     });
 });
 
-function updateHint(count) {
+function updateHint(times) {
     const hint = document.getElementById('wizardLineCount');
+    const belowEl = document.getElementById('wizardCountBelow');
+    const aboveEl = document.getElementById('wizardCountAbove');
+    const boxBelow = document.getElementById('wizStatBelow');
+    const boxAbove = document.getElementById('wizStatAbove');
+    
     if (!hint) return;
 
-    if (count === 0) {
-        hint.textContent = 'Nenhum tempo detectado ainda';
-        hint.parentElement.classList.remove('valid');
+    if (!times || times.length === 0) {
+        hint.innerHTML = '<strong>0</strong> validados';
+        hint.parentElement.classList.remove('active-info');
+        
+        belowEl.innerHTML = '<strong>0</strong> abaixo de 6 min';
+        boxBelow.classList.remove('active-green');
+        
+        aboveEl.innerHTML = '<strong>0</strong> acima de 6 min';
+        boxAbove.classList.remove('active-red');
     } else {
-        hint.textContent = `${count} tempo${count > 1 ? 's' : ''} detectado${count > 1 ? 's' : ''} — pronto para avançar`;
-        hint.parentElement.classList.add('valid');
+        hint.innerHTML = `<strong>${times.length}</strong> validado${times.length > 1 ? 's' : ''}`;
+        hint.parentElement.classList.add('active-info');
+        
+        let below = 0;
+        let above = 0;
+        times.forEach(t => { t.seconds > 360 ? above++ : below++; });
+        
+        belowEl.innerHTML = `<strong>${below}</strong> abaixo de 6 min`;
+        if (below > 0) boxBelow.classList.add('active-green'); else boxBelow.classList.remove('active-green');
+        
+        aboveEl.innerHTML = `<strong>${above}</strong> acima de 6 min`;
+        if (above > 0) boxAbove.classList.add('active-red'); else boxAbove.classList.remove('active-red');
     }
 }
 
